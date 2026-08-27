@@ -1,93 +1,98 @@
-# 💻 Prática 04: Dando Vida ao App (Adicionar e Deletar)
+# Meu Diário Acadêmico
 
-Vamos conectar a interface ao React. Ao final, você digita uma tarefa, adiciona à lista e remove pelo `X`.
+Atividade desenvolvida para a disciplina de **Programação para Dispositivos Móveis**, utilizando React Native e Expo.
 
-## 🎯 Objetivos
+**Professor:** Marcelo Alves Farias
+**IESB**
 
-* Criar estados para o texto do input e para a lista.
-* Implementar `handleAdd` e `handleDelete` com imutabilidade.
-* Trocar cards estáticos por renderização com `.map()`.
-* Validar o fluxo no Expo Go.
+## Objetivo
 
----
+Desenvolver uma tela inicial para cadastro de disciplinas utilizando os principais conceitos estudados em React Native.
 
-## 📦 Fluxo Git
+Foram utilizados:
 
-1. Crie a Issue da **Prática 04**.
-2. Branch:
+* Core Components: ão os componentes básicos fornecidos pelo React Native para construir a interface.  Neste projeto foram utilizados componentes como View, Text, TextInput, Pressable e Switch.
+
+* Import e Export: permitem organizar o código em arquivos diferentes e reutilizar informações entre eles. Neste projeto, os textos da aplicação foram declarados no arquivo labels.js e importados para o App.js.
+
+* StyleSheet: recurso utilizado para criar e organizar os estilos dos componentes, como tamanho de fonte, espaçamento, cores, bordas e alinhamento.
+
+* Flexbox: sistema de organização de layout utilizado pelo React Native. Foi usado para controlar o posicionamento dos elementos, como deixar o campo de texto e o botão lado a lado.
+
+* SafeAreaView: mantém o conteúdo da aplicação dentro de uma área segura da tela, evitando que textos e componentes fiquem escondidos pela barra de status, câmera ou outras áreas do dispositivo.
+
+* Dimensões com `flex` e porcentagem: utilizados para criar um layout mais adaptável a diferentes tamanhos de tela. O flex permite que os componentes ocupem o espaço disponível, enquanto valores em porcentagem definem larguras proporcionais, como 70% para o campo de texto e 28% para o botão.
+
+* Pressable: componente utilizado para criar o botão "Adicionar". Ele permite identificar quando o usuário está pressionando o botão e aplicar um efeito visual durante essa interação.
+
+* Switch: componente utilizado para representar uma opção de ligar ou desligar. Neste projeto foi utilizado na opção "Mostrar apenas obrigatórias", ainda sem realizar o filtro real da lista, conforme permitido na atividade.
+
+
+## Criação do projeto
+
+O projeto foi criado utilizando o comando:
 
 ```bash
-git checkout -b feature/pratica04
+npx create-expo-app@latest . --template blank
 ```
 
-3. Continue o app em `praticas/pratica04` (crie o Expo se ainda não existir, ou evolua a cópia da Prática 03).
+Também foi instalada a biblioteca:
 
 ```bash
-npm install
+npx expo install react-native-safe-area-context
+```
+
+## Executando o projeto
+
+Para iniciar a aplicação:
+
+```bash
 npx expo start
 ```
 
----
+## Funcionalidades
 
-## 🛠️ O que implementar
+A aplicação possui:
 
-### 1. Estados
+* Cabeçalho com o nome **Meu Diário Acadêmico**
+* Campo para digitar o nome de uma disciplina
+* Botão **Adicionar**
+* Lista estática de disciplinas
+* Layout utilizando Flexbox
+* `SafeAreaView`
+* Botão utilizando `Pressable`
+* Efeito visual ao pressionar o botão
+* `Switch` para "Mostrar apenas obrigatórias"
 
-No componente principal:
+O Switch foi implementado como demonstração de componente e ainda não realiza filtro na lista, conforme permitido pelo enunciado da atividade.
 
-* `taskText` — string do que está sendo digitado (`useState('')`)
-* `tasks` — array de tarefas (`useState([])`)
+## Tela da aplicação
 
-### 2. Capturar digitação
+![Tela inicial](./assets/prints/tela-inicial.png)
 
-No `TextInput`:
+## Tecnologias utilizadas
 
-* `value={taskText}`
-* `onChangeText={setTaskText}`
+* React Native
+* Expo
+* JavaScript
 
-### 3. Função `handleAdd`
 
-* Ignore texto vazio (`trim`).
-* Crie objeto `{ id, title }` (`id` com `Date.now().toString()` é suficiente neste exercício).
-* Atualize a lista com spread: `setTasks([...tasks, newTask])`.
-* Limpe o input: `setTaskText('')`.
-* Ligue essa função no `onPress` do botão `+`.
+## Observação sobre a estrutura do projeto
 
-### 4. Renderizar com `.map()`
+Antes da criação do projeto Expo, a pasta `pratica04` já possuía um arquivo `README.md` com orientações anteriores da disciplina.
 
-* Remova os cards hardcoded.
-* Use `tasks.map(...)` para desenhar cada card.
-* Não esqueça a prop `key={item.id}`.
-
-### 5. Função `handleDelete(id)`
-
-* Use `filter` para gerar nova lista sem o id clicado.
-* Passe a função ao `onPress` do `X` de cada card.
-
----
-
-## 🧪 Como testar
-
-1. Adicione 3 tarefas diferentes.
-2. Delete a do meio.
-3. Confirme que o input limpa após adicionar.
-4. (Esperado) Com muitas tarefas, a tela **pode não rolar bem** — isso será resolvido na próxima aula com `FlatList`.
-
----
-
-## ✅ Critérios de entrega
-
-* [ ] Adicionar e deletar funcionando no celular
-* [ ] Estados + imutabilidade (sem `push`/`splice` no estado)
-* [ ] Lista renderizada com `.map()`
-* [ ] Issue, branch `feature/pratica04`, commit, push e Pull Request
-
-### Commit sugerido
+Como o comando utilizado para criar o projeto:
 
 ```bash
-git add .
-git commit -m "Feat: Implementa useState para adicionar e remover tarefas"
-git push origin feature/pratica04
+npx create-expo-app@latest . --template blank
 ```
 
-Na **Aula 05**, vamos melhorar listas (`FlatList`) e persistir dados no aparelho (`AsyncStorage`). A organização em componentes fica para a Aula 06.
+exige que a pasta esteja vazia, o arquivo original foi movido temporariamente para fora da pasta `pratica04` e renomeado para:
+
+```text
+README_pratica04_original.md
+```
+
+Esse arquivo foi mantido apenas como backup e referência das instruções anteriores.
+
+O `README.md` localizado atualmente dentro de `pratica04` corresponde à documentação desta atividade, contendo a descrição do projeto, recursos utilizados, comandos de execução e imagens da aplicação.
