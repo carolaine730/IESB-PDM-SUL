@@ -1,47 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, TextInput, View,Button, ScrollView } from 'react-native';
-import {  rotulo_btn_cadastro_meta, rotulo_input_meta, rotulo_lista_metas } from './mensagens';
-import { useState } from 'react';
-import MetaList from '../componentes/MetaList';
-import MetaInput from '../componentes/MetaInput';
-
+import { StyleSheet, View } from "react-native";
+import { useState } from "react";
+import MetaList from "./componentes/MetaList";
+import MetaInput from "./componentes/MetaInput";
 
 export default function App() {
+  const [metas, setMetas] = useState([]);
 
+  function adicionarMetaHandler(inputMeta) {
+    const novaMeta = { id: Math.random().toString(), texto: inputMeta};
+    setMetas([...metas, novaMeta]);
+  }
 
-const [ metas, setMetas] = useState([]);
-
-function adicionarMetaHandler(inputMeta){
-  setMetas([...metas, inputMetaText]);
-}
+  function deletarMetaHandle (id) {
+    console.log(id);
+    const novasMetas = metas.filter(meta => meta.id !== id);
+    setMetas(novasMetas);
+  }
 
   return (
     <View style={styles.mainContainer}>
-      <MetaInput onAddMeta={adicionarMetaHandler}/>
+      <MetaInput onAddMeta={adicionarMetaHandler} />
+
       <View style={styles.metaContainer}>
-        <MetaList array={metas}/>
+        <MetaList array={metas} 
+        onDeleteItem={deletarMetaHandle}/>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mainContainer:{
+  mainContainer: {
     padding: 30,
     flex: 1,
-    flexDirection: 'column',
+    flexDirection: "column",
   },
-  inputText: {
-    borderColor: '#cccccc',
-    borderWidth: 1,
-  },
+
   metaContainer: {
-    flex: 2
+    flex: 10,
   },
 });
