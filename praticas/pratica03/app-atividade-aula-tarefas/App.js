@@ -1,31 +1,47 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text, Image } from "react-native";
 import { useState } from "react";
 import MetaList from "./componentes/MetaList";
 import MetaInput from "./componentes/MetaInput";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function App() {
   const [metas, setMetas] = useState([]);
 
   function adicionarMetaHandler(inputMeta) {
-    const novaMeta = { id: Math.random().toString(), texto: inputMeta};
+    const novaMeta = { id: Math.random().toString(), texto: inputMeta };
     setMetas([...metas, novaMeta]);
   }
 
-  function deletarMetaHandle (id) {
+  function deletarMetaHandle(id) {
     console.log(id);
-    const novasMetas = metas.filter(meta => meta.id !== id);
+    const novasMetas = metas.filter((meta) => meta.id !== id);
     setMetas(novasMetas);
   }
 
   return (
-    <View style={styles.mainContainer}>
-      <MetaInput onAddMeta={adicionarMetaHandler} />
-
-      <View style={styles.metaContainer}>
-        <MetaList array={metas} 
-        onDeleteItem={deletarMetaHandle}/>
-      </View>
-    </View>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topo}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={require("./assets/favicon.png")}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </View>
+          <View>
+            <Text style={styles.headerText}>Minhas Metas</Text>
+          </View>
+        </View>
+        <View style={styles.mainContainer}>
+          <MetaInput onAddMeta={adicionarMetaHandler} />
+          <View style={styles.metaContainer}>
+            <MetaList array={metas} onDeleteItem={deletarMetaHandle} />
+          </View>
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -37,6 +53,28 @@ const styles = StyleSheet.create({
   },
 
   metaContainer: {
-    flex: 10,
+    flex: 15,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  imageContainer: {
+    alignItems: "flex-start",
+    marginTop: 10,
+    paddingLeft: 30,
+  },
+  image: {
+    width: 50,
+    height: 50,
+  },
+  topo:{
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems:'center'
+  },
+  headerText:{
+    fontSize: 20,
+    marginLeft: 10
   },
 });
