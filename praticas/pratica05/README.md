@@ -1,79 +1,89 @@
-# 💻 Prática 05: FlatList e App que Não Esquece
+# Prática 05 — MetasSemestre
 
-Nesta prática o To-Do ganha lista eficiente e persistência local. **Ainda não** vamos extrair componentes — isso é a Prática 06.
+Atividade desenvolvida para a disciplina de Programação para Dispositivos Móveis.
 
-## 🎯 Objetivos
+Professor: Marcelo Alves Farias  
+Instituição: IESB
 
-* Substituir `.map()` por `FlatList`.
-* Salvar e carregar tarefas com AsyncStorage + `useEffect`.
-* Validar que fechar e reabrir o app mantém os dados.
+## Objetivo
 
----
+Desenvolver um aplicativo de metas acadêmicas utilizando React Native e Expo.
 
-## 📦 Fluxo Git
+Foram utilizados:
 
-1. Crie a Issue da **Prática 05**.
-2. Branch:
+- useState
+- props
+- componentização
+- Pressable
+- useEffect
+- AsyncStorage
+- FlatList
+- SafeAreaView
 
-```bash
-git checkout -b feature/pratica05
-```
+## Funcionalidades
 
-3. Trabalhe em `praticas/pratica05` (evolua a base da Prática 04).
+- Adicionar metas acadêmicas;
+- Impedir metas vazias;
+- Exibir Alert quando o campo estiver vazio;
+- Remover metas;
+- Exibir a data de criação;
+- Salvar as metas com AsyncStorage;
+- Recuperar as metas ao abrir novamente o aplicativo.
 
-```bash
-npm install
-npx expo start
-```
+## Componentização
 
----
+O projeto possui dois componentes na pasta components:
 
-## 🛠️ Parte A — FlatList
+### MetaInput.js
 
-1. Remova o `.map()` da lista.
-2. Importe `FlatList` de `react-native`.
-3. Configure:
+Responsável pelo campo de texto e botão para adicionar uma nova meta.
 
-* `data={tasks}`
-* `keyExtractor={(item) => item.id}`
-* `renderItem={...}` desenhando cada tarefa (card ainda pode ficar inline no `App`)
+Props utilizadas:
 
-4. Teste adicionando **muitas** tarefas (15+) e confirme a rolagem suave.
+- value
+- onChangeText
+- onAdd
 
----
+### MetaList.js
 
-## 🛠️ Parte B — AsyncStorage
+Responsável pela exibição das metas utilizando FlatList.
 
-1. Pare o bundler (Ctrl+C) e instale:
+Props utilizadas:
 
-```bash
-npx expo install @react-native-async-storage/async-storage
-```
+- metas
+- onDelete
 
-2. Crie `saveTasks` (async): grave a lista com `setItem` + `JSON.stringify`.
-3. Chame `saveTasks` após adicionar e após deletar (com a lista já atualizada).
-4. Crie `loadTasks` (async): leia com `getItem`, faça `JSON.parse` se houver valor, e use `setTasks`.
-5. No `useEffect` com `[]`, chame `loadTasks()` na montagem.
 
-### Teste extremo
+## Carregamento
 
-Adicione 3 tarefas → feche o app por completo (remover dos recentes) → abra de novo → as tarefas devem continuar lá.
+O primeiro useEffect do App.js é executado quando o aplicativo abre.
 
----
+Ele utiliza:
 
-## ✅ Critérios de entrega
+AsyncStorage.getItem(STORAGE_KEY)
 
-* [ ] `FlatList` rolando com muitos itens
-* [ ] Persistência: fechar e reabrir mantém as tarefas
-* [ ] Add e delete continuam funcionando
-* [ ] Issue, branch `feature/pratica05`, commit, push e Pull Request
+e JSON.parse para recuperar as metas salvas.
 
-### Commit sugerido
+##Salvamento
 
-```bash
-git add .
-git commit -m "Feat: Adiciona FlatList e AsyncStorage para persistir tarefas"
-git push origin feature/pratica05
-```
+O segundo useEffect é executado sempre que a lista de metas muda.
 
-Na **Aula 06**, vamos **organizar o código**: extrair o card da tarefa para um componente reutilizável com props.
+Ele utiliza:
+
+JSON.stringify(metas)
+
+e:
+
+AsyncStorage.setItem(STORAGE_KEY, metasJSON)
+
+A variável carregando evita que uma lista vazia seja salva antes do carregamento inicial.
+
+
+A remoção das metas é feita utilizando filter pelo id.
+
+## Persistência com AsyncStorage
+
+A chave utilizada é:
+
+```javascript
+const STORAGE_KEY = "@metas_semestre";
