@@ -39,3 +39,17 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+
+# Dependências
+node_modules/
+**/node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Arquivos gerados
+dist/
+build/
+*.log
