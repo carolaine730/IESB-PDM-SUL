@@ -1,6 +1,6 @@
-import { View, Text, TextInput, StyleSheet } from "react-native";
 
 import { useState } from "react";
+import { View, Text, TextInput, StyleSheet } from "react-native";
 
 function GerenciarDespesas() {
   const [descricao, setDescricao] = useState("");
@@ -9,9 +9,9 @@ function GerenciarDespesas() {
 
   return (
     <View style={styles.container}>
+
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Descrição</Text>
-
         <TextInput
           style={styles.input}
           maxLength={20}
@@ -22,7 +22,6 @@ function GerenciarDespesas() {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Valor da Despesa</Text>
-
         <TextInput
           style={styles.input}
           keyboardType="decimal-pad"
@@ -33,9 +32,13 @@ function GerenciarDespesas() {
 
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Data da Despesa</Text>
-
-        <TextInput style={styles.input} value={data} onChangeText={setData} />
+        <TextInput
+          style={styles.input}
+          value={data}
+          onChangeText={setData}
+        />
       </View>
+
     </View>
   );
 }

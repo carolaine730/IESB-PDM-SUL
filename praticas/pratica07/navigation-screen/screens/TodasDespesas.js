@@ -1,6 +1,5 @@
 
 import { View } from "react-native";
-
 import DespesaSaida from "../components/despesa/DespesaSaida";
 import { DESPESAS } from "../data/despesas";
 

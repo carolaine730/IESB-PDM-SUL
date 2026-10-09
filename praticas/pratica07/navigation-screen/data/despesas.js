@@ -1,4 +1,3 @@
-
 export const DESPESAS = [
   {
     id: "d1",
@@ -18,4 +17,5 @@ export const DESPESAS = [
     valor: 150.90,
     data: new Date("2026-10-07T12:00:00"),
   },
+  
 ];
