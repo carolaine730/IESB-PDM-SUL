@@ -1,117 +1,67 @@
-# 💻 Prática 06: Arrumando a Casa (Componentização)
+# RotinaIESB
 
-Nesta prática o app **não ganha funcionalidade nova** para o usuário final. O objetivo é melhorar a **qualidade do código**: extrair o visual da tarefa para um componente separado, deixando o `App` mais limpo.
+Atividade Integradora desenvolvida para a disciplina de Programação para Dispositivos Móveis.
 
-## 🎯 Objetivos
+**Professor:** Marcelo Alves Farias  
+**Instituição:** IESB  
+**Aulas relacionadas:** 02, 03, 04, 05 e 06
+**Aluna:** Carolaine Nunes Santos - 2514290034 
 
-* Criar a estrutura `src/components`.
-* Extrair o card da tarefa para `TaskCard` com props.
-* Manter FlatList, add/delete e persistência funcionando (teste de regressão).
+## Objetivo
 
----
+O RotinaIESB é um aplicativo para organização da rotina acadêmica.
 
-## 📦 Fluxo Git
+O aplicativo permite cadastrar compromissos, visualizar a lista, remover itens e manter os dados salvos mesmo após fechar e abrir o aplicativo novamente.
 
-1. Crie a Issue da **Prática 06**.
-2. Branch:
 
-```bash
-git checkout -b feature/pratica06
-```
+## Funcionalidades
+- Adicionar compromissos;
+- Validar campo vazio com Alert;
+- Exibir data e hora de criação;
+- Remover compromissos;
+- Exibir a lista com FlatList;
+- Utilizar Pressable com feedback visual;
+- Salvar os dados com AsyncStorage;
+- Recuperar os compromissos após reabrir o aplicativo.
 
-3. Trabalhe em `praticas/pratica06` (evolua a base da Prática 05).
 
-```bash
-npm install
-npx expo start
-```
+## Arquivos criados
+  # labels.js
+- Contém os rótulos utilizados pelo aplicativo através de exports nomeados.
 
----
+   # components/CompromissoInput.js
+- Componente responsável pelo campo de texto e pelo botão de adicionar.
 
-## 🛠️ O que fazer
+ # Props utilizadas:
+- value
+- onChangeText
+- onAdd
+- labels
+- components/CompromissoList.js
 
-### 1. Estrutura de pastas
+  # Componente responsável pela exibição da lista de compromissos.
 
-Na raiz do projeto Expo, crie:
+ # Props utilizadas:
+- itens
+- onDelete
+- tituloLista
+- listaVazia
 
-```text
-src/components/
-```
+## Persistência com AsyncStorage
+- A chave utilizada para armazenamento é: 
 
-### 2. Criar `TaskCard`
+(const STORAGE_KEY = "@rotina_iesb_compromissos";)
 
-1. Crie `src/components/TaskCard.js` (ou `.jsx`).
-2. Recorte o JSX do card (a `View`, o `Text` e o `TouchableOpacity` do `X`) que está dentro do `renderItem` no `App`.
-3. Leve junto os estilos (`StyleSheet`) referentes ao card.
-4. Exporte o componente recebendo props `{ title, onDelete }`.
+## useEffect de carregamento
+O primeiro useEffect, localizado no App.js, é executado quando o aplicativo é iniciado.
 
-Exemplo de forma do filho:
+## useEffect de salvamento
+O segundo useEffect é executado sempre que a lista de compromissos é alterada.
 
-```javascript
-export function TaskCard({ title, onDelete }) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.title}>{title}</Text>
-      <TouchableOpacity onPress={onDelete}>
-        <Text>X</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-```
 
-### 3. Usar no `App`
+## Criação do projeto
 
-```javascript
-import { TaskCard } from './src/components/TaskCard';
-
-// na FlatList:
-renderItem={({ item }) => (
-  <TaskCard
-    title={item.title}
-    onDelete={() => handleDelete(item.id)}
-  />
-)}
-```
-
-> Se na prática anterior o campo se chamava `task` em vez de `title`, padronize para `title` **ou** adapte o nome da prop — pai e filho precisam falar a mesma língua.
-
-### 4. O que NÃO precisa mudar
-
-* Lógica de `handleAdd` / `handleDelete`
-* AsyncStorage e `useEffect`
-* Estrutura da `FlatList` (`data`, `keyExtractor`)
-
-Só a **forma** de desenhar cada item muda.
-
----
-
-## 🧪 Teste de regressão
-
-No Expo Go, confirme que o app continua:
-
-1. Adicionando tarefas
-2. Removendo pelo `X`
-3. Rolando a lista
-4. Mantendo dados após fechar e reabrir o app
-
-Se algo parou, revise as props e o caminho do `import`.
-
----
-
-## ✅ Critérios de entrega
-
-* [ ] `TaskCard` em `src/components` com props `{ title, onDelete }`
-* [ ] `FlatList` usando o novo componente
-* [ ] Add, delete e persistência intactos
-* [ ] Issue, branch `feature/pratica06`, commit, push e Pull Request
-
-### Commit sugerido
+O projeto foi criado utilizando:
 
 ```bash
-git add .
-git commit -m "Refactor: Extrai interface da tarefa para componente TaskCard"
-git push origin feature/pratica06
-```
-
-Parabéns: ao final desta trilha você saiu do zero até um To-Do multiplataforma com persistência e código organizado em componentes.
+npx create-expo-app@latest . --template blank

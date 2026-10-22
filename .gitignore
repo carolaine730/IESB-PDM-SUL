@@ -1,0 +1,14 @@
+# Dependências
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Arquivos gerados
+dist/
+build/
+*.log
+
+# Configurações locais
+.claude/
