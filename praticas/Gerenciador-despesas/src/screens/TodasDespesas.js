@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+} from "react-native";
 
 import DespesaSaida from "../components/despesa/DespesaSaida";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +25,8 @@ export default function TodasDespesas({ navigation, despesas }) {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <View style={styles.cabecalho}>
         <Text style={styles.titulo}>Todas as Despesas</Text>
 
@@ -64,8 +74,11 @@ export default function TodasDespesas({ navigation, despesas }) {
             ? "Total de Despesas"
             : `Total - ${categoriaSelecionada}`
         }
+        onSelecionarDespesa={(id) =>
+          navigation.navigate("GerenciarDespesa", { id })
+        }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -73,6 +86,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0,
   },
   titulo: {
     fontSize: 22,
@@ -116,22 +130,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   cabecalho: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingHorizontal: 15,
-  marginTop: 20,
-  marginBottom: 15,
-  position: 'relative',
-},
-botaoAdicionar: {
-  position: 'absolute',
-  right: 15,
-  backgroundColor: '#351401',
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    marginTop: 20,
+    marginBottom: 15,
+    position: "relative",
+  },
+  botaoAdicionar: {
+    position: "absolute",
+    right: 15,
+    backgroundColor: "#351401",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
