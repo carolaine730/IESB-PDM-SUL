@@ -1,51 +1,56 @@
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
 
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-
-import TodasDespesas from './src/screens/TodasDespesas';
-import DespesasRecentes from './src/screens/DespesasRecentes';
-import GerenciarDespesa from './src/screens/GerenciarDespesa';
+import TodasDespesas from "./src/screens/TodasDespesas";
+import DespesasRecentes from "./src/screens/DespesasRecentes";
+import GerenciarDespesa from "./src/screens/GerenciarDespesa";
 
 import {
   ExpensesContextProvider,
   useExpenses,
-} from './src/store/expenses-context';
+} from "./src/store/expenses-context";
+
+import { useColorScheme } from "react-native";
+import { COLORS } from "./src/constants/theme";
+import { ThemeProvider, useTheme } from "./src/store/theme-context";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function NavegacaoAbas() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+
         tabBarIcon: ({ color, size }) => (
           <Ionicons
-            name={
-              route.name === 'Recentes'
-                ? 'time-outline'
-                : 'wallet-outline'
-            }
+            name={route.name === "Recentes" ? "time-outline" : "wallet-outline"}
             size={size}
             color={color}
           />
         ),
-        tabBarActiveTintColor: '#351401',
-        tabBarInactiveTintColor: 'gray',
+
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
+
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
       })}
     >
-      <Tab.Screen
-        name="Recentes"
-        component={DespesasRecentes}
-      />
-
-      <Tab.Screen
-        name="Todas"
-        component={TodasDespesas}
-      />
+      <Tab.Screen name="Recentes" component={DespesasRecentes} />
+      <Tab.Screen name="Todas" component={TodasDespesas} />
     </Tab.Navigator>
   );
 }
@@ -70,7 +75,7 @@ function NavegacaoPrincipal() {
         <Stack.Screen
           name="GerenciarDespesa"
           component={GerenciarDespesa}
-          options={{ title: 'Nova despesa' }}
+          options={{ title: "Nova despesa" }}
         />
       </Stack.Navigator>
     </NavigationContainer>
@@ -79,8 +84,10 @@ function NavegacaoPrincipal() {
 
 export default function App() {
   return (
-    <ExpensesContextProvider>
-      <NavegacaoPrincipal />
-    </ExpensesContextProvider>
+    <ThemeProvider>
+      <ExpensesContextProvider>
+        <NavegacaoPrincipal />
+      </ExpensesContextProvider>
+    </ThemeProvider>
   );
 }

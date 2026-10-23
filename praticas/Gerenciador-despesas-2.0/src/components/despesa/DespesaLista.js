@@ -1,10 +1,23 @@
 
 import React from 'react';
-import { FlatList, Text, StyleSheet, View } from 'react-native';
+
+import {
+  FlatList,
+  Text,
+  StyleSheet,
+  View,
+} from 'react-native';
+
+import { Ionicons } from '@expo/vector-icons';
 
 import DespesaItem from './DespesaItem';
+import { useTheme } from '../../store/theme-context';
 
-export default function DespesaLista({ despesas, onSelecionarDespesa }) {
+export default function DespesaLista({
+  despesas,
+  onSelecionarDespesa,
+}) {
+  const { colors } = useTheme();
 
   function renderizarDespesa({ item }) {
     return (
@@ -19,11 +32,33 @@ export default function DespesaLista({ despesas, onSelecionarDespesa }) {
     );
   }
 
-  if (despesas.length === 0) {
+  function renderizarListaVazia() {
     return (
       <View style={styles.containerVazio}>
-        <Text style={styles.textoVazio}>
-          Nenhuma despesa encontrada.
+        <Ionicons
+          name="receipt-outline"
+          size={64}
+          color={colors.textSecondary}
+        />
+
+        <Text
+          style={[
+            styles.tituloVazio,
+            { color: colors.text },
+          ]}
+        >
+          Nenhuma despesa encontrada
+        </Text>
+
+        <Text
+          style={[
+            styles.textoVazio,
+            {
+              color: colors.textSecondary,
+            },
+          ]}
+        >
+          Toque no botão + para adicionar uma nova despesa.
         </Text>
       </View>
     );
@@ -34,7 +69,13 @@ export default function DespesaLista({ despesas, onSelecionarDespesa }) {
       data={despesas}
       renderItem={renderizarDespesa}
       keyExtractor={(item) => String(item.id)}
-      contentContainerStyle={styles.lista}
+      ListEmptyComponent={renderizarListaVazia}
+      contentContainerStyle={[
+        styles.lista,
+        despesas.length === 0 &&
+          styles.listaVazia,
+      ]}
+      keyboardShouldPersistTaps="handled"
     />
   );
 }
@@ -42,16 +83,31 @@ export default function DespesaLista({ despesas, onSelecionarDespesa }) {
 const styles = StyleSheet.create({
   lista: {
     paddingVertical: 10,
+    flexGrow: 1,
   },
-  containerVazio: {
-    flex: 1,
+
+  listaVazia: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
-  textoVazio: {
-    fontSize: 16,
-    color: '#777777',
+
+  containerVazio: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 25,
+  },
+
+  tituloVazio: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 15,
     textAlign: 'center',
+  },
+
+  textoVazio: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 22,
   },
 });

@@ -1,86 +1,257 @@
-import React, { useState } from "react";
+
+import React, { useState, useMemo } from 'react';
+
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   Pressable,
   SafeAreaView,
   StatusBar,
   Platform,
-} from "react-native";
+} from 'react-native';
 
-import DespesaSaida from "../components/despesa/DespesaSaida";
-import { Ionicons } from "@expo/vector-icons";
-import { useExpenses } from "../store/expenses-context";
+import { Ionicons } from '@expo/vector-icons';
 
-const CATEGORIAS = ["Todas", "Alimentação", "Transporte", "Lazer", "Contas"];
+import DespesaSaida from '../components/despesa/DespesaSaida';
+import { useExpenses } from '../store/expenses-context';
+import { useTheme } from '../store/theme-context';
+import useDebounce from '../hooks/useDebounce';
+
+const CATEGORIAS = [
+  'Todas',
+  'Alimentação',
+  'Transporte',
+  'Lazer',
+  'Contas',
+];
 
 export default function TodasDespesas({ navigation }) {
   const { expenses } = useExpenses();
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todas");
 
-  const despesasFiltradas = expenses.filter(
-    (expense) =>
-      categoriaSelecionada === "Todas" ||
-      expense.category === categoriaSelecionada,
-  );
+  // Tema claro e escuro controlado pelo aplicativo
+  const { isDark, colors, toggleTheme } = useTheme();
+
+  // Estados da busca e da categoria
+  const [busca, setBusca] = useState('');
+  const [categoriaSelecionada, setCategoriaSelecionada] =
+    useState('Todas');
+
+  // Aguarda 300ms após a última digitação
+  const buscaDebounced = useDebounce(busca, 300);
+
+  // Filtra despesas por descrição e categoria
+  const despesasFiltradas = useMemo(() => {
+    const textoBusca = buscaDebounced
+      .trim()
+      .toLocaleLowerCase('pt-BR');
+
+    return expenses.filter((expense) => {
+      const correspondeCategoria =
+        categoriaSelecionada === 'Todas' ||
+        expense.category === categoriaSelecionada;
+
+      const correspondeBusca = String(
+        expense.description || ''
+      )
+        .toLocaleLowerCase('pt-BR')
+        .includes(textoBusca);
+
+      return correspondeCategoria && correspondeBusca;
+    });
+  }, [expenses, categoriaSelecionada, buscaDebounced]);
+
+  function abrirCadastro() {
+    navigation.navigate('GerenciarDespesa');
+  }
+
+  function abrirEdicao(id) {
+    navigation.navigate('GerenciarDespesa', {
+      expenseId: id,
+    });
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
-      <View style={styles.cabecalho}>
-        <Text style={styles.titulo}>Todas as Despesas</Text>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+    >
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
 
-        <Pressable
-          style={styles.botaoAdicionar}
-          onPress={() => navigation.navigate("GerenciarDespesa")}
+      {/* Cabeçalho */}
+      <View style={styles.cabecalho}>
+        <Text
+          style={[
+            styles.titulo,
+            { color: colors.text },
+          ]}
         >
-          <Ionicons name="add" size={26} color="#FFFFFF" />
-        </Pressable>
+          Todas as Despesas
+        </Text>
+
+        <View style={styles.acoesCabecalho}>
+          {/* Botão para alternar o tema */}
+          <Pressable
+            onPress={toggleTheme}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isDark
+                ? 'Ativar tema claro'
+                : 'Ativar tema escuro'
+            }
+            style={[
+              styles.botaoTema,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Ionicons
+              name={
+                isDark
+                  ? 'sunny-outline'
+                  : 'moon-outline'
+              }
+              size={23}
+              color={colors.primary}
+            />
+          </Pressable>
+
+          {/* Botão para adicionar despesa */}
+          <Pressable
+            onPress={abrirCadastro}
+            accessibilityRole="button"
+            accessibilityLabel="Adicionar despesa"
+            style={[
+              styles.botaoAdicionar,
+              { backgroundColor: colors.primary },
+            ]}
+          >
+            <Ionicons
+              name="add"
+              size={26}
+              color={isDark ? '#121212' : '#FFFFFF'}
+            />
+          </Pressable>
+        </View>
       </View>
 
-      <Text style={styles.subtitulo}>Filtrar por categoria:</Text>
+      {/* Campo de pesquisa */}
+      <View
+        style={[
+          styles.containerBusca,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Ionicons
+          name="search-outline"
+          size={21}
+          color={colors.textSecondary}
+        />
+
+        <TextInput
+          style={[
+            styles.inputBusca,
+            { color: colors.text },
+          ]}
+          placeholder="Buscar despesa pela descrição..."
+          placeholderTextColor={colors.placeholder}
+          value={busca}
+          onChangeText={setBusca}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        {busca.length > 0 && (
+          <Pressable
+            onPress={() => setBusca('')}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar busca"
+          >
+            <Ionicons
+              name="close-circle"
+              size={21}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Filtro por categoria */}
+      <Text
+        style={[
+          styles.subtitulo,
+          { color: colors.text },
+        ]}
+      >
+        Filtrar por categoria:
+      </Text>
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filtros}
         contentContainerStyle={styles.filtrosConteudo}
+        keyboardShouldPersistTaps="handled"
       >
-        {CATEGORIAS.map((categoria) => (
-          <Pressable
-            key={categoria}
-            onPress={() => setCategoriaSelecionada(categoria)}
-            style={[
-              styles.botaoFiltro,
-              categoriaSelecionada === categoria && styles.botaoSelecionado,
-            ]}
-          >
-            <Text
+        {CATEGORIAS.map((categoria) => {
+          const selecionada =
+            categoriaSelecionada === categoria;
+
+          return (
+            <Pressable
+              key={categoria}
+              onPress={() =>
+                setCategoriaSelecionada(categoria)
+              }
               style={[
-                styles.textoFiltro,
-                categoriaSelecionada === categoria && styles.textoSelecionado,
+                styles.botaoFiltro,
+                {
+                  backgroundColor: selecionada
+                    ? colors.primary
+                    : colors.category,
+                },
               ]}
             >
-              {categoria}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[
+                  styles.textoFiltro,
+                  {
+                    color: selecionada
+                      ? isDark
+                        ? '#121212'
+                        : '#FFFFFF'
+                      : colors.categoryText,
+                  },
+                ]}
+              >
+                {categoria}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
+      {/* Lista e resumo das despesas */}
       <DespesaSaida
         despesas={despesasFiltradas}
         periodo={
-          categoriaSelecionada === "Todas"
-            ? "Total de Despesas"
+          categoriaSelecionada === 'Todas'
+            ? 'Total de Despesas'
             : `Total - ${categoriaSelecionada}`
         }
-        onSelecionarDespesa={(id) =>
-          navigation.navigate("GerenciarDespesa", {
-            expenseId: id,
-          })
-        }
+        onSelecionarDespesa={abrirEdicao}
       />
     </SafeAreaView>
   );
@@ -89,67 +260,97 @@ export default function TodasDespesas({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 0 : 0,
+    paddingTop:
+      Platform.OS === 'android'
+        ? StatusBar.currentHeight || 0
+        : 0,
   },
+
+  cabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    marginTop: 20,
+    marginBottom: 15,
+    minHeight: 44,
+  },
+
   titulo: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#351401",
+    fontSize: 20,
+    fontWeight: 'bold',
+    flexShrink: 1,
   },
+
+  acoesCabecalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+
+  botaoTema: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+
+  botaoAdicionar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  containerBusca: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginHorizontal: 15,
+    marginBottom: 15,
+    height: 48,
+  },
+
+  inputBusca: {
+    flex: 1,
+    fontSize: 15,
+    marginLeft: 8,
+    paddingVertical: 8,
+  },
+
   subtitulo: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
     marginHorizontal: 15,
     marginBottom: 8,
-    color: "#333333",
   },
+
   filtros: {
     flexGrow: 0,
     marginBottom: 10,
   },
+
   filtrosConteudo: {
     paddingHorizontal: 12,
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: 5,
   },
+
   botaoFiltro: {
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: "#E5E7EB",
     marginRight: 8,
   },
-  botaoSelecionado: {
-    backgroundColor: "#351401",
-  },
+
   textoFiltro: {
-    color: "#333333",
     fontSize: 13,
-    fontWeight: "500",
-  },
-  textoSelecionado: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  cabecalho: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 15,
-    marginTop: 20,
-    marginBottom: 15,
-    position: "relative",
-  },
-  botaoAdicionar: {
-    position: "absolute",
-    right: 15,
-    backgroundColor: "#351401",
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    justifyContent: "center",
-    alignItems: "center",
+    fontWeight: '500',
   },
 });

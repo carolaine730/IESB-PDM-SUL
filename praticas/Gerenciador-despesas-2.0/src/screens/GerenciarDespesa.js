@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from 'react';
+
 import {
   View,
   Text,
@@ -7,255 +9,589 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Modal,
+  KeyboardAvoidingView,
   Platform,
-} from "react-native";
+  useColorScheme,
+} from 'react-native';
 
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
-const CATEGORIAS = ["Alimentação", "Transporte", "Lazer", "Contas"];
+import { useExpenses } from '../store/expenses-context';
+import { COLORS } from '../constants/theme';
+import { useTheme } from '../store/theme-context';
+
+const CATEGORIES = [
+  'Alimentação',
+  'Transporte',
+  'Lazer',
+  'Contas',
+];
+
+const VALUE_REGEX = /^\d*\.?\d{0,2}$/;
+
+function formatDate(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function parseDate(value) {
+  if (!value) {
+    return new Date();
+  }
+
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function displayDate(value) {
+  if (!value) {
+    return 'Selecionar data';
+  }
+
+  const [year, month, day] = value.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+function validate(values) {
+  const errors = {};
+
+  if (!values.description.trim() ||
+      values.description.trim().length < 3) {
+    errors.description =
+      'A descrição deve ter no mínimo 3 caracteres.';
+  }
+
+  const amount = parseFloat(values.amount);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    errors.amount = 'O valor deve ser maior que zero.';
+  }
+
+  if (!values.date) {
+    errors.date = 'Selecione uma data.';
+  } else {
+    const selectedDate = parseDate(values.date);
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    if (
+      Number.isNaN(selectedDate.getTime()) ||
+      selectedDate > today
+    ) {
+      errors.date = 'A data não pode ser futura.';
+    }
+  }
+
+  if (!values.category) {
+    errors.category = 'Selecione uma categoria.';
+  }
+
+  return errors;
+}
 
 export default function GerenciarDespesa({
   navigation,
   route,
-  adicionarDespesa,
-  editarDespesa,
-  despesas,
 }) {
-  const idDespesa = route.params?.id;
+  const {
+    expenses,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+  } = useExpenses();
 
-  const despesaExistente = despesas.find((despesa) => despesa.id === idDespesa);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const colors = COLORS[isDark ? 'dark' : 'light'];
 
-  const modoEdicao = !!despesaExistente;
+  const expenseId = route.params?.expenseId;
+  const isEditing = expenseId !== undefined &&
+                    expenseId !== null;
 
-  const [descricao, setDescricao] = useState(despesaExistente?.descricao || "");
-
-  const [valor, setValor] = useState(
-    despesaExistente ? String(despesaExistente.valor) : "",
+  const existingExpense = expenses.find(
+    (expense) => expense.id === expenseId
   );
 
-  const [categoria, setCategoria] = useState(despesaExistente?.categoria || "");
+  const [form, setForm] = useState(() => ({
+    description: existingExpense?.description || '',
+    amount: existingExpense
+      ? String(existingExpense.amount)
+      : '',
+    date: existingExpense?.date || '',
+    category: existingExpense?.category || '',
+  }));
 
-  const [data, setData] = useState(() => {
-    if (despesaExistente?.data) {
-      const [ano, mes, dia] = despesaExistente.data.split("-").map(Number);
+  const [errors, setErrors] = useState({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] =
+    useState(false);
 
-      return new Date(ano, mes - 1, dia);
-    }
+  // Atualiza o título da tela conforme o modo
+  useEffect(() => {
+    navigation.setOptions({
+      title: isEditing ? 'Editar despesa' : 'Nova despesa',
+      headerStyle: {
+        backgroundColor: colors.surface,
+      },
+      headerTintColor: colors.text,
+    });
+  }, [navigation, isEditing, colors.surface, colors.text]);
 
-    return new Date();
-  });
-
-  const [mostrarCalendario, setMostrarCalendario] = useState(false);
-
-  function alterarValor(texto) {
-    const valorFormatado = texto.replace(",", ".");
-
-    const regex = /^\d*\.?\d{0,2}$/;
-
-    if (regex.test(valorFormatado)) {
-      setValor(valorFormatado);
-    }
-  }
-
-  function alterarData(evento, dataSelecionada) {
-    setMostrarCalendario(false);
-
-    if (dataSelecionada) {
-      setData(dataSelecionada);
-    }
-  }
-
-  function salvarDespesa() {
-    if (descricao.trim() === "" || valor.trim() === "" || categoria === "") {
-      const mensagem = "Preencha a descrição, o valor e a categoria.";
-
-      if (Platform.OS === "web") {
-        window.alert(mensagem);
-      } else {
-        Alert.alert("Atenção", mensagem);
-      }
-      return;
-    }
-
-    if (!Number.isFinite(Number(valor)) || Number(valor) <= 0) {
-      const mensagem = "Informe um valor maior que zero.";
-
-      if (Platform.OS === "web") {
-        window.alert(mensagem);
-      } else {
-        Alert.alert("Valor inválido", mensagem);
-      }
-      return;
-    }
-
-    const novaDespesa = {
-      id: Date.now().toString(),
-      descricao: descricao.trim(),
-      valor: Number(valor),
-      categoria,
-      data: [
-        data.getFullYear(),
-        String(data.getMonth() + 1).padStart(2, "0"),
-        String(data.getDate()).padStart(2, "0"),
-      ].join("-"),
+  // Atualiza um campo do formulário
+  function handleChange(field, value) {
+    const updatedForm = {
+      ...form,
+      [field]: value,
     };
 
-    if (modoEdicao) {
-      editarDespesa({
-        ...novaDespesa,
-        id: despesaExistente.id,
-      });
+    setForm(updatedForm);
+
+    // Remove o erro do campo quando for corrigido
+    if (errors[field]) {
+      const updatedErrors = validate(updatedForm);
+
+      setErrors((previousErrors) => ({
+        ...previousErrors,
+        [field]: updatedErrors[field],
+      }));
+    }
+  }
+
+  // Permite somente números com até 2 casas decimais
+  function handleAmountChange(text) {
+    const normalized = text.replace(',', '.');
+
+    if (VALUE_REGEX.test(normalized)) {
+      handleChange('amount', normalized);
+    }
+  }
+
+  function handleDateChange(event, selectedDate) {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (event.type === 'dismissed') {
+      return;
+    }
+
+    if (selectedDate) {
+      handleChange('date', formatDate(selectedDate));
+    }
+  }
+
+  function handleSave() {
+    const validationErrors = validate(form);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
+    const expenseData = {
+      id: isEditing
+        ? expenseId
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      description: form.description.trim(),
+      amount: parseFloat(form.amount),
+      date: form.date,
+      category: form.category,
+    };
+
+    if (isEditing) {
+      updateExpense(expenseData);
     } else {
-      adicionarDespesa(novaDespesa);
+      addExpense(expenseData);
     }
 
     navigation.goBack();
   }
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.conteudo}
-    >
-      <Text style={styles.titulo}>
-        {modoEdicao ? "Editar Despesa" : "Cadastrar Despesa"}
+  function handleDelete() {
+    Alert.alert(
+      'Excluir despesa',
+      'Tem certeza que deseja excluir esta despesa?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            deleteExpense(expenseId);
+            navigation.goBack();
+          },
+        },
+      ]
+    );
+  }
+
+  function inputStyle(field) {
+    return [
+      styles.input,
+      {
+        backgroundColor: colors.surface,
+        color: colors.text,
+        borderColor: errors[field]
+          ? colors.danger
+          : colors.border,
+      },
+    ];
+  }
+
+  function ErrorMessage({ field }) {
+    if (!errors[field]) {
+      return null;
+    }
+
+    return (
+      <Text style={[styles.error, { color: colors.danger }]}>
+        {errors[field]}
       </Text>
+    );
+  }
 
-      <Text style={styles.label}>Descrição</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex: Supermercado"
-        value={descricao}
-        onChangeText={setDescricao}
-      />
+  return (
+    <KeyboardAvoidingView
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[styles.title, { color: colors.text }]}>
+          {isEditing ? 'Editar Despesa' : 'Cadastrar Despesa'}
+        </Text>
 
-      <Text style={styles.label}>Valor (R$)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex: 150.00"
-        keyboardType="decimal-pad"
-        value={valor}
-        onChangeText={alterarValor}
-      />
+        {/* DESCRIÇÃO */}
+        <Text style={[styles.label, { color: colors.text }]}>
+          Descrição
+        </Text>
 
-      <Text style={styles.label}>Categoria</Text>
+        <TextInput
+          style={inputStyle('description')}
+          placeholder="Ex: Supermercado"
+          placeholderTextColor={colors.placeholder}
+          value={form.description}
+          onChangeText={(text) =>
+            handleChange('description', text)
+          }
+        />
 
-      <View style={styles.categorias}>
-        {CATEGORIAS.map((item) => (
-          <Pressable
-            key={item}
-            onPress={() => setCategoria(item)}
+        <ErrorMessage field="description" />
+
+        {/* VALOR */}
+        <Text style={[styles.label, { color: colors.text }]}>
+          Valor (R$)
+        </Text>
+
+        <TextInput
+          style={inputStyle('amount')}
+          placeholder="Ex: 150.00"
+          placeholderTextColor={colors.placeholder}
+          keyboardType="decimal-pad"
+          value={form.amount}
+          onChangeText={handleAmountChange}
+        />
+
+        <ErrorMessage field="amount" />
+
+        {/* DATA */}
+        <Text style={[styles.label, { color: colors.text }]}>
+          Data
+        </Text>
+
+        <Pressable
+          onPress={() => setShowDatePicker(true)}
+          style={[
+            styles.selectButton,
+            {
+              backgroundColor: colors.surface,
+              borderColor: errors.date
+                ? colors.danger
+                : colors.border,
+            },
+          ]}
+        >
+          <Text style={{ color: colors.text }}>
+            {displayDate(form.date)}
+          </Text>
+
+          <Ionicons
+            name="calendar-outline"
+            size={22}
+            color={colors.textSecondary}
+          />
+        </Pressable>
+
+        <ErrorMessage field="date" />
+
+        {showDatePicker && Platform.OS !== 'web' && (
+          <DateTimePicker
+            value={parseDate(form.date)}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+
+        {/* CATEGORIA */}
+        <Text style={[styles.label, { color: colors.text }]}>
+          Categoria
+        </Text>
+
+        <Pressable
+          onPress={() => setShowCategoryModal(true)}
+          style={[
+            styles.selectButton,
+            {
+              backgroundColor: colors.surface,
+              borderColor: errors.category
+                ? colors.danger
+                : colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={{
+              color: form.category
+                ? colors.text
+                : colors.placeholder,
+            }}
+          >
+            {form.category || 'Selecionar categoria'}
+          </Text>
+
+          <Ionicons
+            name="chevron-down"
+            size={22}
+            color={colors.textSecondary}
+          />
+        </Pressable>
+
+        <ErrorMessage field="category" />
+
+        {/* SALVAR */}
+        <Pressable
+          onPress={handleSave}
+          style={[
+            styles.saveButton,
+            { backgroundColor: colors.primary },
+          ]}
+        >
+          <Text
             style={[
-              styles.botaoCategoria,
-              categoria === item && styles.categoriaSelecionada,
+              styles.saveButtonText,
+              { color: isDark ? '#121212' : '#FFFFFF' },
+            ]}
+          >
+            {isEditing ? 'Salvar Alterações' : 'Salvar Despesa'}
+          </Text>
+        </Pressable>
+
+        {/* EXCLUIR SOMENTE NA EDIÇÃO */}
+        {isEditing && (
+          <Pressable
+            onPress={handleDelete}
+            style={[
+              styles.deleteButton,
+              { borderColor: colors.danger },
+            ]}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={20}
+              color={colors.danger}
+            />
+
+            <Text
+              style={[
+                styles.deleteText,
+                { color: colors.danger },
+              ]}
+            >
+              Excluir Despesa
+            </Text>
+          </Pressable>
+        )}
+      </ScrollView>
+
+      {/* MODAL DE CATEGORIAS */}
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colors.surface },
             ]}
           >
             <Text
               style={[
-                styles.textoCategoria,
-                categoria === item && styles.textoSelecionado,
+                styles.modalTitle,
+                { color: colors.text },
               ]}
             >
-              {item}
+              Selecione uma categoria
             </Text>
-          </Pressable>
-        ))}
-      </View>
 
-      <Text style={styles.label}>Data</Text>
+            {CATEGORIES.map((category) => (
+              <Pressable
+                key={category}
+                onPress={() => {
+                  handleChange('category', category);
+                  setShowCategoryModal(false);
+                }}
+                style={[
+                  styles.categoryOption,
+                  { borderBottomColor: colors.border },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    { color: colors.text },
+                  ]}
+                >
+                  {category}
+                </Text>
 
-      <Pressable
-        style={styles.botaoData}
-        onPress={() => setMostrarCalendario(true)}
-      >
-        <Text>{data.toLocaleDateString("pt-BR")}</Text>
-      </Pressable>
+                {form.category === category && (
+                  <Ionicons
+                    name="checkmark"
+                    size={22}
+                    color={colors.primary}
+                  />
+                )}
+              </Pressable>
+            ))}
 
-      {mostrarCalendario && (
-        <DateTimePicker
-          value={data}
-          mode="date"
-          display="default"
-          onChange={alterarData}
-        />
-      )}
-
-      <Pressable style={styles.botaoSalvar} onPress={salvarDespesa}>
-        <Text style={styles.textoSalvar}>Salvar Despesa</Text>
-      </Pressable>
-    </ScrollView>
+            <Pressable
+              onPress={() => setShowCategoryModal(false)}
+              style={styles.cancelButton}
+            >
+              <Text style={{ color: colors.danger }}>
+                Cancelar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
   },
-  conteudo: {
+  content: {
     padding: 20,
+    paddingBottom: 60,
   },
-  titulo: {
+  title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#351401",
+    fontWeight: 'bold',
     marginBottom: 25,
   },
   label: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: 8,
-    color: "#333333",
   },
   input: {
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#CCCCCC",
     borderRadius: 8,
     padding: 12,
-    marginBottom: 20,
     fontSize: 16,
+    marginBottom: 5,
   },
-  categorias: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 20,
+  error: {
+    fontSize: 12,
+    marginBottom: 14,
+    marginTop: 3,
   },
-  botaoCategoria: {
-    backgroundColor: "#E5E7EB",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  categoriaSelecionada: {
-    backgroundColor: "#351401",
-  },
-  textoCategoria: {
-    color: "#333333",
-  },
-  textoSelecionado: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  botaoData: {
-    backgroundColor: "#FFFFFF",
-    padding: 15,
-    borderRadius: 8,
+  selectButton: {
     borderWidth: 1,
-    borderColor: "#CCCCCC",
-    marginBottom: 30,
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 52,
   },
-  botaoSalvar: {
-    backgroundColor: "#351401",
+  saveButton: {
     padding: 16,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: 'center',
+    marginTop: 25,
   },
-  textoSalvar: {
-    color: "#FFFFFF",
+  saveButtonText: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+  },
+  deleteButton: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 35,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  categoryOption: {
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  categoryText: {
+    fontSize: 16,
+  },
+  cancelButton: {
+    marginTop: 20,
+    padding: 14,
+    alignItems: 'center',
   },
 });
